@@ -1,0 +1,28 @@
+{% extends 'index.html' %}
+
+{% block content %}
+    <h1>Hi, you are on register page</h1>
+        <div class="container">
+        <form method="post">
+          <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                  <input name="login" placeholder="login" readonly onfocus="this.removeAttribute('readonly')" >
+            </div>
+          </div>
+        <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                  <input name="password" placeholder="password" type="password" readonly onfocus="this.removeAttribute('readonly')">
+            </div>
+          </div>
+        <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                  <button type="submit">Register Now</button>
+            </div>
+          </div>
+            {% csrf_token %}
+        </form>
+        {% if error %}
+            <p>WARNING!!!! {{ error }}</p>
+        {% endif %}
+    </div>
+{% endblock %}
