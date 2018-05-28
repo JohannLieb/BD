@@ -1,14 +1,19 @@
 from django.urls import path
 from .views import (
     products_controller,
-    register_controller,
-    RegisterController
+    RegisterController,
+    LoginController,
+    LogoutController,
+    logout
 )
 
 urlpatterns = [
-    path('', products_controller,),
-    # path('register', register_controller),
-    path('register', RegisterController.as_view()),
-    path('products', products_controller),
+    path(r'', products_controller, name='main'),
+    path(r'register', RegisterController.as_view(), name='register'),
+    path(r'products', products_controller, name='products'),
+    path(r'login', LoginController.as_view(), name='login'),
+    path(r'logout', LogoutController.as_view(), name='login'),
+    path(r'logout', logout, name='login'),
+
 ]
 
