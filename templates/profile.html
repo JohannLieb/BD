@@ -1,0 +1,28 @@
+{% extends 'index.html' %}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12 col-sm-6 col-md-6">
+                <div class="well well-sm">
+                    <div class="row">
+                        <div class="col-sm-6 col-md-4">
+                            <img src="http://placehold.it/380x500" alt="" class="img-rounded img-responsive" />
+                        </div>
+                        <div class="col-sm-6 col-md-8">
+                            <h4>{{ user.humanized_full_name }}</h4>
+                            <p>
+                                Address: {{ user.address_full }}
+                            </p>
+                            <p>
+                                Phone number: {{ user.telno }}
+                            </p>
+                           <form action="profchange">
+                            <input type="submit" value="Редактировать информацию" />
+                           </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
