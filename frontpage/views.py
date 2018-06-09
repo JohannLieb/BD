@@ -1,12 +1,14 @@
-from django.shortcuts import render
-from django.contrib.auth.models import User
+from django.shortcuts import render, redirect
 from django.views import View
-from django.contrib.auth.hashers import make_password, check_password
-from django.http.response import HttpResponse
-from .models import Clients
-from .models import Product, Clients, Staff
+from django.contrib.auth.hashers import make_password
+from django.views.generic import  TemplateView
+from .models import Product, Clients, Staff, Orders, Property
+from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import logout
+from django.utils import timezone
+
+from decimal import Decimal
 
 # Create your views here.
 def products_controller(request):
@@ -20,45 +22,84 @@ class RegisterController(View):
 
     def post(self, request):
         username, password = request.POST['login'], request.POST['password']
-        if Clients.objects.filter(login=username).all():
-            return render(request, "register.html", { 'result': 'User with such login already exists.'}, status=400)
-        if Staff.objects.filter(login=username).all():
+        if any((Clients.objects.filter(login=username).all(),
+                Staff.objects.filter(login=username).all(),
+                User.objects.filter(username=username).all())):
             return render(request, "register.html", { 'result': 'User with such login already exists.'}, status=400)
         hashed_password = make_password(password)
-        new_client = Clients.objects.create(login=username, userpass=hashed_password)
-        new_client.save()
+        user = Clients.objects.create(login=username, userpass=hashed_password)
+        user.save()
         return render(request, 'register.html', { 'result': 'Successfully registered!'})
-
-
-
 
 class LoginController(View):
 
     def get(self, request):
+        if request.user and request.user.is_authenticated:
+            return redirect('/')
         return render(request, 'login.html')
 
     def post(self, request):
         username, password = request.POST['login'], request.POST['password']
-        new_client = Clients.objects.get(login=username)
-        is_password_valid = check_password(request.POST['password'], new_client.userpass )
-        if is_password_valid:
-            request.session.user = new_client
-            return render(request, 'main.html', {'result': 'Welcome!'})
-        else:
-            return render(request, 'main.html', {'error': 'Логин/пароль введен неверно!'})
-
-
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            return redirect('/')
+        return render(request, 'login.html', {'result': 'User doesn\'t exist or password is incorrect.'})
 
 class LogoutController(View):
+
     def get(self, request):
-        if request.session.user:
-            request.session.user = None
-        return render(request, "index.html")
+        logout(request)
+        return redirect('/')
 
-def register_controller(request):
-    return render(request, 'register.html')
+class ProfileController(View):
+
+    def get(self, request):
+        return render(request, 'profile.html')
 
 
-def logout1(request):
-    logout(request)
-    render(request, "index.html", {'user': new_client})
+class OrderController(View):
+
+    def get(self, request):
+        orders = Orders.objects.filter(clients_id = request.user.clients_id)
+        return render(request, 'orders.html', {'orders': orders})
+
+class ProfChangeController(View):
+
+    def get(self, request):
+        logged_in_user = Clients.objects.get(clients_id=request.user.clients_id)
+        phone_number = logged_in_user.telno
+        address = logged_in_user.address
+        fullname = logged_in_user.humanized_full_name
+        return render(request, 'profchange.html', {'phone_number': phone_number,
+                                                   'address': address, 'fullname': fullname} )
+
+
+    def post(self, request):
+        address, fullname, telno = request.POST['address'], request.POST['fullname'], request.POST['telno']
+        logged_in_user = Clients.objects.get(clients_id=request.user.clients_id)
+        logged_in_user.address = address
+        logged_in_user.fullname = logged_in_user.cast_to_shitty_type(fullname)
+        logged_in_user.telno = telno
+        logged_in_user.save()
+        # profchange = Clients(address=address, fullname=fullname, telno=telno)
+        # profchange.save()
+        # Тут ты создаёшь НОВОГО клиента
+        return render(request, 'profchange_done.html')
+
+class NewOrderController(View):
+
+    def get(self, request):
+        products = Product.objects.prefetch_related('characteristics_set__property').all()
+        for product in products:
+            for c in product.characteristics_set.all():
+                if c.property.name == 'Price':
+                    product.price = c.property.value
+        return render(request, 'new_order.html', {'products': products})
+
+    def post(self, request):
+        product_id, client_id, price, description = request.POST['product_id'], request.user.clients_id, request.POST['price'], request.POST['description']
+        new_order = Orders(orders_date=timezone.now(), description=description, product=Product.objects.get(product_id=int(product_id)),
+                           clients=request.user, price=Decimal(price), paid=False)
+        new_order.save()
+        return render(request, 'order_done.html')
