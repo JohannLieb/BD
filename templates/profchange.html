@@ -1,0 +1,33 @@
+{% extends 'index.html' %}
+
+{% block content %}
+    <h1>Изменение информации о себе</h1>
+        <div class="container">
+        <form method="post">
+          <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                  <input name="fullname" placeholder="fullname" value="{{ fullname }}" readonly onfocus="this.removeAttribute('readonly')" >
+
+            </div>
+          </div>
+        <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                  <input name="address" placeholder="address" readonly value="{{ address }}" onfocus="this.removeAttribute('readonly')">
+            </div>
+          </div>
+             <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                  <input name="telno" placeholder="telno" readonly value="{{ phone_number }}" onfocus="this.removeAttribute('readonly')" >
+            </div>
+        <div class="row justify-content-md-center">
+            <div class="col-md-auto">
+                  <button type="submit">Обновить информацию</button>
+            </div>
+          </div>
+            {% csrf_token %}
+        </form>
+        {% if result %}
+            <p>{{ result }}</p>
+        {% endif %}
+    </div>
+{% endblock %}
